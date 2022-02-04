@@ -26,11 +26,11 @@ null_prop <- function(var) {
 check_missing <- function(dat, incl_plot = FALSE) {
   
   # Count missing observations
-  dat_na_count <- dat %>% summarise_all(null_count) %>% t() %>% 
+  dat_na_count <- dat %>% setDT(dat)[, lapply(.SD, null_count)] %>% t() %>% 
     round(digits = 3) %>% data.frame() %>% setnames(old = '.', new = 'N_MISSING')
   
   # Count missing observations
-  dat_na_prop <- dat %>% summarise_all(null_prop) %>% t() %>% 
+  dat_na_prop <- dat %>% setDT(dat)[, lapply(.SD, null_prop)] %>% t() %>% 
     round(digits = 3) %>% data.frame() %>% setnames(old = '.', new = 'PROP_MISSING')
   
   # Join into one data frame
