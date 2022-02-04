@@ -26,15 +26,14 @@ null_prop <- function(var) {
 check_missing <- function(dat, incl_plot = FALSE) {
   
   # Count missing observations
-  dat_na_count <- dat %>% setDT(dat)[, lapply(.SD, null_count)] %>% t() %>% 
+  dat_na <- setDT(dat)[, lapply(.SD, null_count)] %>% t() %>%
     round(digits = 3) %>% data.frame() %>% setnames(old = '.', new = 'N_MISSING')
   
-  # Count missing observations
-  dat_na_prop <- dat %>% setDT(dat)[, lapply(.SD, null_prop)] %>% t() %>% 
-    round(digits = 3) %>% data.frame() %>% setnames(old = '.', new = 'PROP_MISSING')
+  # Get number of rows
+  dat_na$N_ROWS <- nrow(dat)
   
-  # Join into one data frame
-  dat_na <- cbind(dat_na_count, dat_na_prop) %>% data.frame
+  # Get proportion missing
+  dat_na$PROP_MISSING <- round(dat_na$N_MISSING / nrow(dat), 3)
   
   # Convert rownames to first column
   dat_na <- tibble::rownames_to_column(dat_na, 'VARIABLE')
