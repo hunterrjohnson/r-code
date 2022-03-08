@@ -53,7 +53,7 @@ check_missing <- function(dat, incl_plot = FALSE) {
 }
 
 # Function to compare two data sets (e.g. old vs new)
-col_check = function(dat1, dat2, id_var = NULL) {
+check_basic = function(dat1, dat2, id_var = NULL) {
   
   # Get data frame names as strings
   name1 = deparse(substitute(dat1))
