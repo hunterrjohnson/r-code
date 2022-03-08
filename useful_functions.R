@@ -99,3 +99,24 @@ check_basic = function(dat1, dat2, id_var = NULL) {
   }
 
 }
+
+# Function to check date ranges and panel balance (if applicable)
+check_dates = function(dat, date_var, id_var = NULL) {
+  
+  # Get ID and date variable names
+  id_var_name = deparse(substitute(id_var))
+  date_var_name = deparse(substitute(date_var))
+  cat('Date Variable: ', date_var_name, '\n')
+  
+  # Check min and max date
+  min_date = min(dat[, get(date_var)])
+  max_date = max(dat[, get(date_var)])
+  cat('Date Range: ', as.character(min_date), 'to', as.character(max_date), '\n')
+  
+  # Check balanced panel
+  if(!is.null(id_var)) {
+    dat = plm::pdata.frame(dat, index = c(id_var, date_var))
+    cat('Panel is balanced: ', plm::is.pbalanced(temp), '\n')
+  } else {cat('Set "id_var" to check for panel balance.')}
+  
+}
