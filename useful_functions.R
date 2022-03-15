@@ -14,12 +14,20 @@ bin_prop <- function(x, na_opt = FALSE){
 }
 
 # Functions to get missing count/proportion for each column of a data frame
-null_count <- function(var) {
-  sum(is.na(var) | var == '' | var %in% c('NULL','null','Null'), na.rm=T)
+null_count <- function(var, zero_opt = NULL) {
+  if(is.null(zero_opt)) {
+    sum(is.na(var) | var == '' | toupper(var) %in% c('NULL'), na.rm=T)
+  } else {
+    sum(is.na(var) | var == '' | toupper(var) %in% c('NULL') | var == 0, na.rm=T)
+  }
 }
 
-null_prop <- function(var) {
-  sum(is.na(var) | var == '' | var %in% c('NULL','null','Null'), na.rm=T) / length(var)
+null_prop <- function(var, zero_opt = NULL) {
+  if(is.null(zero_opt)) {
+    sum(is.na(var) | var == '' | toupper(var) %in% c('NULL'), na.rm=T) / length(var)
+  } else {
+    sum(is.na(var) | var == '' | toupper(var) %in% c('NULL') | var == 0, na.rm=T) / length(var)
+  }
 }
 
 # Function to check missingness in data frame and report in new data frame with optional plot
@@ -53,7 +61,7 @@ check_missing <- function(dat, incl_plot = FALSE) {
 }
 
 # Function to compare two data sets (e.g. old vs new)
-check_basic = function(dat1, dat2, id_var = NULL) {
+compare_basic = function(dat1, dat2, id_var = NULL) {
   
   # Get data frame names as strings
   name1 = deparse(substitute(dat1))
