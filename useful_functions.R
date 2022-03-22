@@ -55,7 +55,8 @@ check_missing <- function(dat, incl_plot = FALSE) {
       theme_minimal() +
       geom_bar(stat = 'identity', fill = '#4f5b66') +
       labs(x = 'Variable Name', y = 'Proportion Missing') +
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+      scale_y_continuous(breaks = seq(0, 1, 0.1))
   }
   
 }
