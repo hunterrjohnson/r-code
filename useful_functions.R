@@ -129,3 +129,11 @@ check_dates = function(dat, date_var, id_var = NULL) {
   } else {cat('Set "id_var" to check for panel balance.')}
   
 }
+
+# Remove non-UTF-8 characters from data frame or data table
+char_cols <- unlist(lapply(dat, is.character))
+char_cols <- names(data.frame(dat)[, char_cols])
+dat[, (char_cols) := lapply(.SD, iconv, from = "ASCII", to = "UTF-8", sub = ''), .SDcols = char_cols]
+
+
+
