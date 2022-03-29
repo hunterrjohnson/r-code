@@ -61,6 +61,54 @@ check_missing <- function(dat, incl_plot = FALSE) {
   
 }
 
+# Functions to get non-missing count/proportion for each column of a data frame
+complete_count <- function(var, zero_opt = NULL) {
+  if(is.null(zero_opt)) {
+    sum(!is.na(var) & var != '' & toupper(var) != 'NULL', na.rm=T)
+  } else {
+    sum(!is.na(var) & var != '' & toupper(var) != 'NULL' & var != 0, na.rm=T)
+  }
+}
+
+complete_prop <- function(var, zero_opt = NULL) {
+  if(is.null(zero_opt)) {
+    sum(!is.na(var) & var != '' & toupper(var) != 'NULL', na.rm=T) / length(var)
+  } else {
+    sum(!is.na(var) & var != '' & toupper(var) != 'NULL' & var != 0, na.rm=T) / length(var)
+  }
+}
+
+# Function to check completeness in data frame and report in new data frame with optional plot
+check_complete <- function(dat, incl_plot = FALSE) {
+  
+  # Count non-missing observations
+  dat_complete <- setDT(dat)[, lapply(.SD, complete_count)] %>% t() %>%
+    round(digits = 3) %>% data.frame() %>% setnames(old = '.', new = 'N_COMPLETE')
+  
+  # Get number of rows
+  dat_complete$N_ROWS <- nrow(dat)
+  
+  # Get proportion complete
+  dat_complete$PROP_COMPLETE <- round(dat_complete$N_COMPLETE / nrow(dat), 3)
+  
+  # Convert rownames to first column
+  dat_complete <- tibble::rownames_to_column(dat_complete, 'VARIABLE')
+  
+  # Assign to global environment
+  assign(paste0(deparse(substitute(dat)), '_NA'), dat_complete, envir = .GlobalEnv)
+  
+  # Create plot and assign to global environment
+  if (isTRUE(incl_plot)) {
+    complete_plot <<- ggplot(dat_complete, aes(x = VARIABLE, y = PROP_COMPLETE)) +
+      theme_minimal() +
+      geom_bar(stat = 'identity', fill = '#4f5b66') +
+      labs(x = 'Variable Name', y = 'Proportion Non-Missing') +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+      scale_y_continuous(breaks = seq(0, 1, 0.1))
+  }
+  
+}
+
 # Function to compare two data sets (e.g. old vs new)
 compare_basic = function(dat1, dat2, id_var = NULL) {
   
