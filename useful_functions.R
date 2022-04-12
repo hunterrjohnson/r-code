@@ -95,7 +95,7 @@ check_complete <- function(dat, incl_plot = FALSE) {
   dat_complete <- tibble::rownames_to_column(dat_complete, 'VARIABLE')
   
   # Assign to global environment
-  assign(paste0(deparse(substitute(dat)), '_NA'), dat_complete, envir = .GlobalEnv)
+  assign(paste0(deparse(substitute(dat)), '_COMPLETE'), dat_complete, envir = .GlobalEnv)
   
   # Create plot and assign to global environment
   if (isTRUE(incl_plot)) {
