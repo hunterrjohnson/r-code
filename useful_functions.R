@@ -183,5 +183,38 @@ char_cols <- unlist(lapply(dat, is.character))
 char_cols <- names(data.frame(dat)[, char_cols])
 dat[, (char_cols) := lapply(.SD, iconv, from = "ASCII", to = "UTF-8", sub = ''), .SDcols = char_cols]
 
+# Miscellaneous NA conversions
+na_blank = function(x) ifelse(is.na(x), '', x)
+blank_na = function(x) ifelse(x == '', NA, x)
+na_zero = function(x) ifelse(is.na(x), 0, x)
+zero_na = function(x) ifelse(x == 0, NA, x)
+inf_na = function(x) ifelse(!is.finite(x), NA, x)
+na_dash = function(x) ifelse(is.na(x), '-', x)
 
-
+# Check which rows are different (for dataframes that should be identical)
+different_rows = function(df1, df2) {
+  
+  # Create list of rows
+  rows = list()
+  
+  # Identify identical rows
+  for (i in 1:nrow(df1)) {
+    if(identical(df1[i, ], df2[i, ])) {
+      rows[[i]] = TRUE
+    } else {
+      rows[[i]] = FALSE
+    }
+  }
+  
+  # Create data table of rows
+  rows = data.table(identical = unlist(rows))
+  rows = tibble::rownames_to_column(rows, 'row_number')
+  
+  # Filter to non-identical rows
+  rows = rows[!(identical)]
+  
+  # Select rows that differ in df1 and df2
+  nonidentical1 <<- df1[as.numeric(rows$row_number), ]
+  nonidentical2 <<- df2[as.numeric(rows$row_number), ]
+  
+}
