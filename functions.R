@@ -218,3 +218,30 @@ different_rows = function(df1, df2) {
   nonidentical2 <<- df2[as.numeric(rows$row_number), ]
   
 }
+
+# Basic summary of numeric variables
+numeric_summary = function(dat) {
+  
+  # Identify numeric columns
+  num_cols = names(dat)[sapply(dat, is.numeric)]
+  
+  # Get summary stats
+  mean_vals = dat[, lapply(.SD, mean, na.rm = TRUE), .SDcols = num_cols] %>%
+    t() %>% data.frame() %>% tibble::rownames_to_column(., "VARIABLE") %>% setnames(., '.', 'MEAN')
+  sd_vals = dat[, lapply(.SD, sd, na.rm = TRUE), .SDcols = num_cols] %>%
+    t() %>% data.frame() %>% tibble::rownames_to_column(., "VARIABLE") %>% setnames(., '.', 'SD')
+  min_vals = dat[, lapply(.SD, min, na.rm = TRUE), .SDcols = num_cols] %>%
+    t() %>% data.frame() %>% tibble::rownames_to_column(., "VARIABLE") %>% setnames(., '.', 'MIN')
+  med_vals = dat[, lapply(.SD, median, na.rm = TRUE), .SDcols = num_cols] %>%
+    t() %>% data.frame() %>% tibble::rownames_to_column(., "VARIABLE") %>% setnames(., '.', 'MEDIAN')
+  max_vals = dat[, lapply(.SD, max, na.rm = TRUE), .SDcols = num_cols] %>%
+    t() %>% data.frame() %>% tibble::rownames_to_column(., "VARIABLE") %>% setnames(., '.', 'MAX')
+
+  # Arrange summary stats values
+  sumstats <<- cbind(mean_vals,
+                     "SD" = sd_vals[, 2],
+                     "MIN" = min_vals[, 2],
+                     "MED" = med_vals[, 2],
+                     "MAX" = max_vals[, 2])
+  
+}
