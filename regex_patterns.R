@@ -14,3 +14,5 @@ df$drop <- ifelse(grepl("(\\s)(/)(.*)", df$Street), 1, df$drop) # rare weird cas
 df$drop <- ifelse(grepl("[ ]\\(.*", df$Street), 1, 0) # for checking parentheses
 df$drop <- ifelse(grepl("(\\-)(\\s?)[a-zA-Z]+(.*)", df$Street), 1, 0) # for checking hyphens
 df$drop <- ifelse(grepl("(\\-)$", df$Street), 1, df$drop)
+df$drop <- ifelse(grepl("^\\d+\\s?-\\s?\\d+", df$Street), 1, df$drop) # ranged street addresses
+df$drop <- ifelse(grepl("(REAR|FRNT)(.*)$", df$Street), 1, df$drop) # rear/front at beginning/end of addresses
