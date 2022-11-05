@@ -16,17 +16,19 @@ bin_prop <- function(x, na_opt = FALSE){
 # Functions to get missing count/proportion for each column of a data frame
 null_count <- function(var, zero_opt = NULL) {
   if(is.null(zero_opt)) {
-    sum(is.na(var) | var == '' | toupper(var) %in% c('NULL'), na.rm=T)
+    sum(var == '' | toupper(var) %in% c('NULL'), na.rm=T) + sum(is.na(var))
   } else {
-    sum(is.na(var) | var == '' | toupper(var) %in% c('NULL') | var == 0, na.rm=T)
+    sum(var == '' | toupper(var) %in% c('NULL') | var == 0, na.rm=T) + sum(is.na(var))
   }
 }
 
 null_prop <- function(var, zero_opt = NULL) {
   if(is.null(zero_opt)) {
-    sum(is.na(var) | var == '' | toupper(var) %in% c('NULL'), na.rm=T) / length(var)
+    ( sum(var == '' | toupper(var) %in% c('NULL'), na.rm=T) +
+        + sum(is.na(var)) ) / length(var)
   } else {
-    sum(is.na(var) | var == '' | toupper(var) %in% c('NULL') | var == 0, na.rm=T) / length(var)
+    ( sum(var == '' | toupper(var) %in% c('NULL') | var == 0, na.rm=T) +
+        + sum(is.na(var)) ) / length(var)
   }
 }
 
@@ -64,17 +66,19 @@ check_missing <- function(dat, incl_plot = FALSE) {
 # Functions to get non-missing count/proportion for each column of a data frame
 complete_count <- function(var, zero_opt = NULL) {
   if(is.null(zero_opt)) {
-    sum(!is.na(var) & var != '' & toupper(var) != 'NULL', na.rm=T)
+    length(var) - ( sum(var == '' | toupper(var) %in% c('NULL'), na.rm=T) + sum(is.na(var)) )
   } else {
-    sum(!is.na(var) & var != '' & toupper(var) != 'NULL' & var != 0, na.rm=T)
+    length(var) - ( sum(var == '' | toupper(var) %in% c('NULL') | var == 0, na.rm=T) + sum(is.na(var)) )
   }
 }
 
 complete_prop <- function(var, zero_opt = NULL) {
   if(is.null(zero_opt)) {
-    sum(!is.na(var) & var != '' & toupper(var) != 'NULL', na.rm=T) / length(var)
+    1 - ( ( sum(var == '' | toupper(var) %in% c('NULL'), na.rm=T) +
+            + sum(is.na(var)) ) / length(var) )
   } else {
-    sum(!is.na(var) & var != '' & toupper(var) != 'NULL' & var != 0, na.rm=T) / length(var)
+    1 - ( ( sum(var == '' | toupper(var) %in% c('NULL') | var == 0, na.rm=T) +
+              + sum(is.na(var)) ) / length(var) )
   }
 }
 
@@ -108,6 +112,11 @@ check_complete <- function(dat, incl_plot = FALSE) {
   }
   
 }
+
+# Test (4 NAs, 3 non-missing)
+# df = data.frame('A' = c(1, 2, 'A', '', 'NULL', NA, ''))
+# check_complete(df)
+# check_missing(df)
 
 # Function to compare two data sets (e.g. old vs new)
 compare_basic = function(dat1, dat2, id_var = NULL) {
