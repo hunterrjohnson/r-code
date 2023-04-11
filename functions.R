@@ -33,11 +33,18 @@ null_prop <- function(var, zero_opt = NULL) {
 }
 
 # Function to check missingness in data frame and report in new data frame with optional plot
-check_missing <- function(dat, incl_plot = FALSE) {
-  
-  # Count missing observations
-  dat_na <- setDT(dat)[, lapply(.SD, null_count)] %>% t() %>%
-    round(digits = 3) %>% data.frame() %>% setnames(old = '.', new = 'N_MISSING')
+check_missing <- function(dat, incl_plot = FALSE, parallel = FALSE) {
+
+  if(parallel == TRUE){
+    require(future.apply)
+    # Count missing observations
+    dat_na <- setDT(dat)[, future_lapply(.SD, null_count)] %>% t() %>%
+      round(digits = 3) %>% data.frame() %>% setnames(old = '.', new = 'N_MISSING')
+  } else {
+    # Count missing observations
+    dat_na <- setDT(dat)[, lapply(.SD, null_count)] %>% t() %>%
+      round(digits = 3) %>% data.frame() %>% setnames(old = '.', new = 'N_MISSING')
+  }
   
   # Get number of rows
   dat_na$N_ROWS <- nrow(dat)
@@ -83,11 +90,18 @@ complete_prop <- function(var, zero_opt = NULL) {
 }
 
 # Function to check completeness in data frame and report in new data frame with optional plot
-check_complete <- function(dat, incl_plot = FALSE) {
+check_complete = function(dat, incl_plot = FALSE, parallel = FALSE) {
   
-  # Count non-missing observations
-  dat_complete <- setDT(dat)[, lapply(.SD, complete_count)] %>% t() %>%
-    round(digits = 3) %>% data.frame() %>% setnames(old = '.', new = 'N_COMPLETE')
+  if(parallel == TRUE){
+    require(future.apply)
+    # Count non-missing observations
+    dat_complete <- setDT(dat)[, future_lapply(.SD, complete_count)] %>% t() %>%
+      round(digits = 3) %>% data.frame() %>% setnames(old = '.', new = 'N_COMPLETE')
+  } else {
+    # Count non-missing observations
+    dat_complete <- setDT(dat)[, lapply(.SD, complete_count)] %>% t() %>%
+      round(digits = 3) %>% data.frame() %>% setnames(old = '.', new = 'N_COMPLETE')
+  }
   
   # Get number of rows
   dat_complete$N_ROWS <- nrow(dat)
