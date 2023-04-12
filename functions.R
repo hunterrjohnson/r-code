@@ -268,3 +268,9 @@ numeric_summary = function(dat) {
                      "MAX" = max_vals[, 2])
   
 }
+
+# Simple way to anonymize multiple columns
+anonymize_data = function(data, cols) {
+  generate_group_ids <- function(col) {as.integer(as.factor(col))}
+  data[, (cols) := lapply(.SD, generate_group_ids), .SDcols = cols]
+}
