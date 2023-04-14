@@ -274,3 +274,17 @@ anonymize_data = function(data, cols) {
   generate_group_ids <- function(col) {as.integer(as.factor(col))}
   data[, (cols) := lapply(.SD, generate_group_ids), .SDcols = cols]
 }
+
+# Function to scrape text from PDF
+scrape_zips = function(url) {
+  
+  # Extract text from PDF
+  pdf_text = pdf_tools::pdf_text(url)
+  
+  # Identify matches (e.g. 5-digit zip codes) using regular expressions
+  matches = regmatches(pdf_text, gregexpr("\\b\\d{5}\\b", pdf_text))
+  
+  # Convert to numeric
+  zips = unique(as.numeric(unlist(numbers)))
+  
+}
