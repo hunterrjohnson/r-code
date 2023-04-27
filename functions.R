@@ -132,6 +132,26 @@ check_complete = function(dat, incl_plot = FALSE, parallel = FALSE) {
 # check_complete(df)
 # check_missing(df)
 
+# Function to get example values from each column
+get_example = function(dat) {
+  dat_example = data.frame(EXAMPLE = apply(dat, 2, function(x) x[which.max(!is.na(x) & x != "" & x != "NULL")])) %>%
+    tibble::rownames_to_column(., 'VARIABLE')
+  assign(paste0(deparse(substitute(dat)), '_EXAMPLE'), dat_example, envir = .GlobalEnv)
+}
+
+# Function to review new data with one command
+reviewData = function(data, parallel_complete = NULL) {
+  data_example = get_example(data)
+  data_complete = check_complete(data, parallel = parallel_complete)
+  data_unique = check_unique(data)
+  data_duplicated = check_duplicated(data)
+  data_numeric = numeric_summary(data)
+  data_summary = left_join(data_EXAMPLE, data_COMPLETE)
+  data_summary = left_join(data_summary, data_UNIQUE)
+  data_summary = left_join(data_summary, data_DUPLICATED)
+  data_SUMMARY <<- left_join(data_summary, sumstats)
+}
+
 # Function to compare two data sets (e.g. old vs new)
 compare_basic = function(dat1, dat2, id_var = NULL) {
   
