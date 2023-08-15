@@ -308,3 +308,31 @@ scrape_zips = function(url) {
   zips = unique(as.numeric(unlist(numbers)))
   
 }
+
+# Function to summarize Booleans
+bool_summary = function(datatable, id_var, except_cols = NULL) {
+  
+  # Identify Boolean columns
+  bool_cols = setdiff(names(datatable)[sapply(datatable, is.logical)], except_cols)
+  
+  # Reshape wide to long
+  meltedDT = melt(datatable, id.vars = id_var, measure.vars = bool_cols, variable.name = "VARIABLE")
+  
+  # Count true and false
+  summaryDT = dcast(meltedDT, VARIABLE ~ value, length)
+  setnames(summaryDT, c("TRUE", "FALSE"), c("TRUE_COUNT", "FALSE_COUNT"))
+  
+  # Calculate totals and proportions
+  summaryDT[, TOTAL_COUNT := TRUE_COUNT + FALSE_COUNT]
+  summaryDT[, PROP_TRUE := round(TRUE_COUNT / TOTAL_COUNT, 3)]
+  summaryDT[, PROP_FALSE := round(FALSE_COUNT / TOTAL_COUNT, 3)]
+  
+  # Select
+  summaryDT = summaryDT %>% select(VARIABLE, TOTAL_COUNT, TRUE_COUNT, FALSE_COUNT, PROP_TRUE, PROP_FALSE)
+  
+  return(summaryDT)
+  
+}
+
+
+
