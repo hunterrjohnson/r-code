@@ -181,8 +181,8 @@ check_dates = function(dat, date_var, id_var = NULL) {
   cat('Date Variable: ', date_var_name, '\n')
   
   # Check min and max date
-  min_date = min(dat[, get(date_var)])
-  max_date = max(dat[, get(date_var)])
+  min_date = min(dat[, get(date_var)], na.rm=T)
+  max_date = max(dat[, get(date_var)], na.rm=T)
   cat('Date Range: ', as.character(min_date), 'to', as.character(max_date), '\n')
   
   # Check balanced panel
