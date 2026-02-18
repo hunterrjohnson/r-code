@@ -1,6 +1,22 @@
 # Useful Functions
 
 #===============================================================================
+# Sample Data for Testing Functions
+
+# sample_data = data.table(
+#   ID = 1:10,
+#   Name = c("Alice", "", "NULL", "Bob", "Chloé", NA, "Eve", "Frank", "Gina", "Henry"),
+#   Age = c(25, NA, 0, 35, 28, Inf, -5, 40, 30, NA),
+#   Salary = c(50000, 60000, NA, 0, 70000, 80000, NA, Inf, 45000, 50000),
+#   JoinDate = as.Date(c("2020-01-01", "2021-05-12", NA, "2019-07-23", "2022-09-15", 
+#                        "2021-12-01", NA, "2020-03-03", "2022-01-01", "2019-11-11")),
+#   IsActive = c(TRUE, FALSE, TRUE, NA, TRUE, FALSE, TRUE, FALSE, NA, TRUE), # logical with NA
+#   Dept = c("HR", "IT", "IT", "HR", "", "Finance", "Finance", "NULL", "IT", "HR"),
+#   Score = c(NA, 88, 92, 75, 0, 100, NA, Inf, 85, 75),
+#   Comments = c("Good", "Average", NA, "Excellent", "NULL", "Poor", "Ok", "", "Nice", "Très bien")
+# )
+
+#===============================================================================
 # Generic
 
 # Function for "not in"
@@ -124,10 +140,10 @@ numeric_summary = function(dat, except_cols = NULL) {
   
   # Arrange summary stats values
   sumstats <- cbind(mean_vals,
-                     "SD" = sd_vals[, 2],
-                     "MIN" = min_vals[, 2],
-                     "MED" = med_vals[, 2],
-                     "MAX" = max_vals[, 2])
+                    "SD" = sd_vals[, 2],
+                    "MIN" = min_vals[, 2],
+                    "MED" = med_vals[, 2],
+                    "MAX" = max_vals[, 2])
   
   # Round output
   num_cols = c("MEAN", "SD", "MIN", "MED", "MAX")
@@ -147,6 +163,7 @@ reviewData = function(data, parallel_complete = NULL) {
   data_duplicated = check_duplicated(data)
   data_numeric = numeric_summary(data)
   data_summary <- data_example |>
+    dplyr::left_join(data_complete, by = "VARIABLE") |>
     dplyr::left_join(data_unique, by = "VARIABLE") |>
     dplyr::left_join(data_duplicated, by = "VARIABLE") |>
     dplyr::left_join(data_numeric, by = "VARIABLE")
@@ -220,3 +237,6 @@ clean_char_utf8 = function(dat) {
   dat[, (char_cols) := lapply(.SD, iconv, from = "ASCII", to = "UTF-8", sub = ''), .SDcols = char_cols]
   return(dat)
 }
+
+
+
