@@ -1,206 +1,161 @@
+# Useful Functions
+
+#===============================================================================
+# Generic
+
 # Function for "not in"
 '%!in%' <- function(x,y){
   !('%in%'(x,y))
 }
 
-# Quick proportion for binary variables
-bin_prop <- function(x, na_opt = FALSE){
-  if (na_opt == FALSE) {
-    table(x)[2] / sum(table(x))
-  }
-  else {
-    table(x)[2] / sum(table(x, useNA = 'ifany'))
-  }
-}
+#===============================================================================
+# NA Conversions
 
-# Functions to get missing count/proportion for each column of a data frame
-null_count <- function(var, zero_opt = NULL) {
-  if(is.null(zero_opt)) {
-    sum(var == '' | toupper(var) %in% c('NULL'), na.rm=T) + sum(is.na(var))
-  } else {
-    sum(var == '' | toupper(var) %in% c('NULL') | var == 0, na.rm=T) + sum(is.na(var))
-  }
-}
+na_blank = function(x) ifelse(is.na(x), '', x)
+blank_na = function(x) ifelse(x == '', NA, x)
+na_zero = function(x) ifelse(is.na(x), 0, x)
+zero_na = function(x) ifelse(x == 0, NA, x)
+inf_na = function(x) ifelse(!is.finite(x), NA, x)
+na_dash = function(x) ifelse(is.na(x), '-', x)
 
-null_prop <- function(var, zero_opt = NULL) {
-  if(is.null(zero_opt)) {
-    ( sum(var == '' | toupper(var) %in% c('NULL'), na.rm=T) +
-        + sum(is.na(var)) ) / length(var)
-  } else {
-    ( sum(var == '' | toupper(var) %in% c('NULL') | var == 0, na.rm=T) +
-        + sum(is.na(var)) ) / length(var)
-  }
-}
-
-# Function to check missingness in data frame and report in new data frame with optional plot
-check_missing <- function(dat, incl_plot = FALSE, parallel = FALSE) {
-
-  if(parallel == TRUE){
-    require(future.apply)
-    # Count missing observations
-    dat_na <- setDT(dat)[, future_lapply(.SD, null_count)] %>% t() %>%
-      round(digits = 3) %>% data.frame() %>% setnames(old = '.', new = 'N_MISSING')
-  } else {
-    # Count missing observations
-    dat_na <- setDT(dat)[, lapply(.SD, null_count)] %>% t() %>%
-      round(digits = 3) %>% data.frame() %>% setnames(old = '.', new = 'N_MISSING')
-  }
-  
-  # Get number of rows
-  dat_na$N_ROWS <- nrow(dat)
-  
-  # Get proportion missing
-  dat_na$PROP_MISSING <- round(dat_na$N_MISSING / nrow(dat), 3)
-  
-  # Convert rownames to first column
-  dat_na <- tibble::rownames_to_column(dat_na, 'VARIABLE')
-  
-  # Assign to global environment
-  assign(paste0(deparse(substitute(dat)), '_NA'), dat_na, envir = .GlobalEnv)
-  
-  # Create plot and assign to global environment
-  if (isTRUE(incl_plot)) {
-    missing_plot <<- ggplot(dat_na, aes(x = VARIABLE, y = PROP_MISSING)) +
-      theme_minimal() +
-      geom_bar(stat = 'identity', fill = '#4f5b66') +
-      labs(x = 'Variable Name', y = 'Proportion Missing') +
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
-      scale_y_continuous(breaks = seq(0, 1, 0.1))
-  }
-  
-}
-
-# Functions to get non-missing count/proportion for each column of a data frame
-complete_count <- function(var, zero_opt = NULL) {
-  if(is.null(zero_opt)) {
-    length(var) - ( sum(var == '' | toupper(var) %in% c('NULL'), na.rm=T) + sum(is.na(var)) )
-  } else {
-    length(var) - ( sum(var == '' | toupper(var) %in% c('NULL') | var == 0, na.rm=T) + sum(is.na(var)) )
-  }
-}
-
-complete_prop <- function(var, zero_opt = NULL) {
-  if(is.null(zero_opt)) {
-    1 - ( ( sum(var == '' | toupper(var) %in% c('NULL'), na.rm=T) +
-            + sum(is.na(var)) ) / length(var) )
-  } else {
-    1 - ( ( sum(var == '' | toupper(var) %in% c('NULL') | var == 0, na.rm=T) +
-              + sum(is.na(var)) ) / length(var) )
-  }
-}
-
-# Function to check completeness in data frame and report in new data frame with optional plot
-check_complete = function(dat, incl_plot = FALSE, parallel = FALSE) {
-  
-  if(parallel == TRUE){
-    require(future.apply)
-    # Count non-missing observations
-    dat_complete <- setDT(dat)[, future_lapply(.SD, complete_count)] %>% t() %>%
-      round(digits = 3) %>% data.frame() %>% setnames(old = '.', new = 'N_COMPLETE')
-  } else {
-    # Count non-missing observations
-    dat_complete <- setDT(dat)[, lapply(.SD, complete_count)] %>% t() %>%
-      round(digits = 3) %>% data.frame() %>% setnames(old = '.', new = 'N_COMPLETE')
-  }
-  
-  # Get number of rows
-  dat_complete$N_ROWS <- nrow(dat)
-  
-  # Get proportion complete
-  dat_complete$PROP_COMPLETE <- round(dat_complete$N_COMPLETE / nrow(dat), 3)
-  
-  # Convert rownames to first column
-  dat_complete <- tibble::rownames_to_column(dat_complete, 'VARIABLE')
-  
-  # Assign to global environment
-  assign(paste0(deparse(substitute(dat)), '_COMPLETE'), dat_complete, envir = .GlobalEnv)
-  
-  # Create plot and assign to global environment
-  if (isTRUE(incl_plot)) {
-    complete_plot <<- ggplot(dat_complete, aes(x = VARIABLE, y = PROP_COMPLETE)) +
-      theme_minimal() +
-      geom_bar(stat = 'identity', fill = '#4f5b66') +
-      labs(x = 'Variable Name', y = 'Proportion Non-Missing') +
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
-      scale_y_continuous(breaks = seq(0, 1, 0.1))
-  }
-  
-}
-
-# Test (4 NAs, 3 non-missing)
-# df = data.frame('A' = c(1, 2, 'A', '', 'NULL', NA, ''))
-# check_complete(df)
-# check_missing(df)
+#===============================================================================
+# Get Example of Data
 
 # Function to get example values from each column
 get_example = function(dat) {
   dat_example = data.frame(EXAMPLE = apply(dat, 2, function(x) x[which.max(!is.na(x) & x != "" & x != "NULL")])) %>%
     tibble::rownames_to_column(., 'VARIABLE')
-  assign(paste0(deparse(substitute(dat)), '_EXAMPLE'), dat_example, envir = .GlobalEnv)
+  return(dat_example)  
 }
 
-# Function to review new data with one command
+#===============================================================================
+# Check Completeness of Data
+
+check_complete <- function(dat, incl_plot = FALSE, parallel = FALSE) {
+  
+  # Internal function to count complete observations
+  complete_count <- function(var, zero_opt = NULL) {
+    if(is.null(zero_opt)) {
+      length(var) - (sum(var == '' | toupper(var) %in% c('NULL'), na.rm = TRUE) + sum(is.na(var)))
+    } else {
+      length(var) - (sum(var == '' | toupper(var) %in% c('NULL') | var == 0, na.rm = TRUE) + sum(is.na(var)))
+    }
+  }
+  
+  # Convert to data.table
+  dat <- data.table::setDT(dat)
+  
+  # Compute counts
+  if (parallel) {
+    require(future.apply)
+    dat_complete <- dat[, future_lapply(.SD, complete_count)] %>%
+      t() %>% round(3) %>% data.frame() %>% setNames('N_COMPLETE')
+  } else {
+    dat_complete <- dat[, lapply(.SD, complete_count)] %>%
+      t() %>% round(3) %>% data.frame() %>% setNames('N_COMPLETE')
+  }
+  
+  # Add row count and proportion complete
+  dat_complete$N_ROWS <- nrow(dat)
+  dat_complete$PROP_COMPLETE <- round(dat_complete$N_COMPLETE / nrow(dat), 3)
+  
+  # Convert rownames to column
+  dat_complete <- tibble::rownames_to_column(dat_complete, 'VARIABLE')
+  
+  # Optional plot
+  if (isTRUE(incl_plot)) {
+    complete_plot <- ggplot(dat_complete, aes(x = VARIABLE, y = PROP_COMPLETE)) +
+      geom_bar(stat = 'identity', fill = '#4f5b66') +
+      labs(x = 'Variable Name', y = 'Proportion Non-Missing') +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+      scale_y_continuous(breaks = seq(0, 1, 0.1))
+    
+    return(list(summary = dat_complete, plot = complete_plot))
+  }
+  
+  return(dat_complete)
+  
+}
+
+#===============================================================================
+# Count Unique Observations
+
+check_unique = function(dat) {
+  dat_unique = dat %>% summarise_all(uniqueN) %>%
+    t() %>% data.frame() %>%
+    tibble::rownames_to_column(., 'VARIABLE') %>%
+    setnames(., '.', 'N_UNIQUE')
+  return(dat_unique)
+}
+
+#===============================================================================
+# Count Duplicate Observations
+
+check_duplicated = function(dat) {
+  dat_dups = dat %>% summarise_all(function(x) sum(duplicated(na.omit(x)))) %>%
+    t() %>% data.frame() %>%
+    tibble::rownames_to_column(., 'VARIABLE') %>%
+    setnames(., '.', 'N_DUPLICATED')
+  return(dat_dups)
+}
+
+#===============================================================================
+# Basic Summary Statistics
+numeric_summary = function(dat, except_cols = NULL) {
+  
+  # Set as data.table
+  dat = setDT(dat)
+  
+  # Identify numeric columns
+  num_cols = setdiff(names(dat)[sapply(dat, is.numeric)], except_cols)
+  
+  # Get summary stats
+  mean_vals = dat[, lapply(.SD, mean, na.rm = TRUE), .SDcols = num_cols] %>%
+    t() %>% data.frame() %>% tibble::rownames_to_column(., "VARIABLE") %>% setnames(., '.', 'MEAN')
+  sd_vals = dat[, lapply(.SD, sd, na.rm = TRUE), .SDcols = num_cols] %>%
+    t() %>% data.frame() %>% tibble::rownames_to_column(., "VARIABLE") %>% setnames(., '.', 'SD')
+  min_vals = dat[, lapply(.SD, min, na.rm = TRUE), .SDcols = num_cols] %>%
+    t() %>% data.frame() %>% tibble::rownames_to_column(., "VARIABLE") %>% setnames(., '.', 'MIN')
+  med_vals = dat[, lapply(.SD, median, na.rm = TRUE), .SDcols = num_cols] %>%
+    t() %>% data.frame() %>% tibble::rownames_to_column(., "VARIABLE") %>% setnames(., '.', 'MEDIAN')
+  max_vals = dat[, lapply(.SD, max, na.rm = TRUE), .SDcols = num_cols] %>%
+    t() %>% data.frame() %>% tibble::rownames_to_column(., "VARIABLE") %>% setnames(., '.', 'MAX')
+  
+  # Arrange summary stats values
+  sumstats <- cbind(mean_vals,
+                     "SD" = sd_vals[, 2],
+                     "MIN" = min_vals[, 2],
+                     "MED" = med_vals[, 2],
+                     "MAX" = max_vals[, 2])
+  
+  # Round output
+  num_cols = c("MEAN", "SD", "MIN", "MED", "MAX")
+  sumstats[num_cols] = lapply(sumstats[num_cols], round, 3)
+  
+  return(sumstats)
+  
+}
+
+#===============================================================================
+# Review Data with Single Function
+
 reviewData = function(data, parallel_complete = NULL) {
   data_example = get_example(data)
   data_complete = check_complete(data, parallel = parallel_complete)
   data_unique = check_unique(data)
   data_duplicated = check_duplicated(data)
   data_numeric = numeric_summary(data)
-  data_summary = left_join(data_EXAMPLE, data_COMPLETE)
-  data_summary = left_join(data_summary, data_UNIQUE)
-  data_summary = left_join(data_summary, data_DUPLICATED)
-  data_SUMMARY <<- left_join(data_summary, sumstats)
+  data_summary <- data_example |>
+    dplyr::left_join(data_unique, by = "VARIABLE") |>
+    dplyr::left_join(data_duplicated, by = "VARIABLE") |>
+    dplyr::left_join(data_numeric, by = "VARIABLE")
+  return(data_summary)
 }
 
-# Function to compare two data sets (e.g. old vs new)
-compare_basic = function(dat1, dat2, id_var = NULL) {
-  
-  # Get data frame names as strings
-  name1 = deparse(substitute(dat1))
-  name2 = deparse(substitute(dat2))
-  
-  # Get ID name if supplied
-  if(!is.null(id_var)) {id_name = deparse(substitute(id_var))}
-  
-  ### COLUMNS
-  cat('*** COMPARE COLUMNS ***', '\n')
-  
-  # Check that number of columns is consistent
-  cat('Number of columns in ', name1, ': ', ncol(dat1), '\n')
-  cat('Number of columns in ', name2, ': ', ncol(dat2), '\n')
-  
-  # Check that column names are consistent
-  if (ncol(dat1) == ncol(dat2) & length(intersect(names(dat1), names(dat2))) == ncol(dat1)) {
-    cat('All columns have same names', '\n')
-  } else {
-    cat( paste0('Columns in ', name1, ' and not in ', name2, ':\n'),
-         setdiff(names(dat1), names(dat2)), '\n')
-    cat( paste0('Columns in ', name2, ' and not in ', name1, ':\n'),
-         setdiff(names(dat2), names(dat1)), '\n')
-  }
-  
-  ### ROWS
-  cat('\n','*** COMPARE ROWS ***', '\n')
-  
-  # Check difference in number of rows
-  cat('Number of rows in ', name1, ': ', nrow(dat1), '\n')
-  cat('Number of rows in ', name2, ': ', nrow(dat2), '\n')
-  cat('Difference between ', name1, 'and ', name2, ': ', nrow(dat1) - nrow(dat2), '\n')
-  
-  ### IDS
-  cat('\n','*** COMPARE IDS ***', '\n')
-  
-  # Check difference in number of unique IDs
-  if(!is.null(id_var)) {
-    cat('ID Variable:', id_name, '\n')
-    cat('Number of unique IDs in', name1, ': ', uniqueN(dat1[, get(id_var)]), '\n')
-    cat('Number of unique IDs in', name2, ': ', uniqueN(dat2[, get(id_var)]), '\n')
-    cat('Difference between ', name1, 'and ', name2, ': ', uniqueN(dat1[, get(id_var)]) - uniqueN(dat2[, get(id_var)]), '\n')
-  }
+#===============================================================================
+# Check Date Ranges
 
-}
-
-# Function to check date ranges and panel balance (if applicable)
 check_dates = function(dat, date_var, id_var = NULL) {
   
   # Get ID and date variable names
@@ -221,95 +176,17 @@ check_dates = function(dat, date_var, id_var = NULL) {
   
 }
 
-# Remove non-UTF-8 characters from data frame or data table
-char_cols <- unlist(lapply(dat, is.character))
-char_cols <- names(data.frame(dat)[, char_cols])
-dat[, (char_cols) := lapply(.SD, iconv, from = "ASCII", to = "UTF-8", sub = ''), .SDcols = char_cols]
+#===============================================================================
+# Anonymize Multiple Columns
 
-# Miscellaneous NA conversions
-na_blank = function(x) ifelse(is.na(x), '', x)
-blank_na = function(x) ifelse(x == '', NA, x)
-na_zero = function(x) ifelse(is.na(x), 0, x)
-zero_na = function(x) ifelse(x == 0, NA, x)
-inf_na = function(x) ifelse(!is.finite(x), NA, x)
-na_dash = function(x) ifelse(is.na(x), '-', x)
-
-# Check which rows are different (for dataframes that should be identical)
-different_rows = function(df1, df2) {
-  
-  # Create list of rows
-  rows = list()
-  
-  # Identify identical rows
-  for (i in 1:nrow(df1)) {
-    if(identical(df1[i, ], df2[i, ])) {
-      rows[[i]] = TRUE
-    } else {
-      rows[[i]] = FALSE
-    }
-  }
-  
-  # Create data table of rows
-  rows = data.table(identical = unlist(rows))
-  rows = tibble::rownames_to_column(rows, 'row_number')
-  
-  # Filter to non-identical rows
-  rows = rows[!(identical)]
-  
-  # Select rows that differ in df1 and df2
-  nonidentical1 <<- df1[as.numeric(rows$row_number), ]
-  nonidentical2 <<- df2[as.numeric(rows$row_number), ]
-  
-}
-
-# Basic summary of numeric variables
-numeric_summary = function(dat) {
-  
-  # Identify numeric columns
-  num_cols = names(dat)[sapply(dat, is.numeric)]
-  
-  # Get summary stats
-  mean_vals = dat[, lapply(.SD, mean, na.rm = TRUE), .SDcols = num_cols] %>%
-    t() %>% data.frame() %>% tibble::rownames_to_column(., "VARIABLE") %>% setnames(., '.', 'MEAN')
-  sd_vals = dat[, lapply(.SD, sd, na.rm = TRUE), .SDcols = num_cols] %>%
-    t() %>% data.frame() %>% tibble::rownames_to_column(., "VARIABLE") %>% setnames(., '.', 'SD')
-  min_vals = dat[, lapply(.SD, min, na.rm = TRUE), .SDcols = num_cols] %>%
-    t() %>% data.frame() %>% tibble::rownames_to_column(., "VARIABLE") %>% setnames(., '.', 'MIN')
-  med_vals = dat[, lapply(.SD, median, na.rm = TRUE), .SDcols = num_cols] %>%
-    t() %>% data.frame() %>% tibble::rownames_to_column(., "VARIABLE") %>% setnames(., '.', 'MEDIAN')
-  max_vals = dat[, lapply(.SD, max, na.rm = TRUE), .SDcols = num_cols] %>%
-    t() %>% data.frame() %>% tibble::rownames_to_column(., "VARIABLE") %>% setnames(., '.', 'MAX')
-
-  # Arrange summary stats values
-  sumstats <<- cbind(mean_vals,
-                     "SD" = sd_vals[, 2],
-                     "MIN" = min_vals[, 2],
-                     "MED" = med_vals[, 2],
-                     "MAX" = max_vals[, 2])
-  
-}
-
-# Simple way to anonymize multiple columns
 anonymize_data = function(data, cols) {
   generate_group_ids <- function(col) {as.integer(as.factor(col))}
   data[, (cols) := lapply(.SD, generate_group_ids), .SDcols = cols]
 }
 
-# Function to scrape text from PDF
-scrape_zips = function(url) {
-  
-  # Extract text from PDF
-  pdf_text = pdf_tools::pdf_text(url)
-  
-  # Identify matches (e.g. 5-digit zip codes) using regular expressions
-  matches = regmatches(pdf_text, gregexpr("\\b\\d{5}\\b", pdf_text))
-  
-  # Convert to numeric
-  zips = unique(as.numeric(unlist(numbers)))
-  
-}
+#===============================================================================
+# Summarize Boolean Columns
 
-# Function to summarize Booleans
 bool_summary = function(datatable, id_var, except_cols = NULL) {
   
   # Identify Boolean columns
@@ -334,5 +211,12 @@ bool_summary = function(datatable, id_var, except_cols = NULL) {
   
 }
 
+#===============================================================================
+# Remove Non-UTF-8
 
-
+clean_char_utf8 = function(dat) {
+  dat <- data.table::as.data.table(dat)
+  char_cols <- names(dat)[sapply(dat, is.character)]
+  dat[, (char_cols) := lapply(.SD, iconv, from = "ASCII", to = "UTF-8", sub = ''), .SDcols = char_cols]
+  return(dat)
+}
